@@ -1,0 +1,30 @@
+{
+    "compilerOptions": {
+        "module": "commonjs",
+        "target": "es5",
+        "sourceMap": true,
+        "declaration": true,
+        "outDir": "./build",
+        "rootDirs": ["gui", "app", "event",
+            "dld", "graphics"],
+        "lib": [
+            "ESNext"
+        ],
+        "baseUrl": "/usr/lib/lotus",
+        "typeRoots": [
+            "/usr/lib/lotus",
+            "/usr/lib/lotus/native/node_modules/@types"
+        ],
+        "types": [
+            "libkit",
+            "lotus",
+            "node"
+        ],
+        "composite": true
+    },
+    "references": [
+        {
+            "path": "/usr/lib/lotus/std"
+        }
+    ]
+}

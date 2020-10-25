@@ -1,0 +1,12 @@
+{
+    "displayName": "daisy",
+    "index": "./build/index.js",
+    "dependencies": ["glfwJS", "NodeJS"],
+    "modules": {
+        "gui": "./build/gui/index.js",
+        "app": "./build/app/index.js",
+        "event": "./build/event/index.js",
+        "dld": "./build/xml/index.js",
+        "graphics": "./build/graphics/index.js"
+    }
+}
