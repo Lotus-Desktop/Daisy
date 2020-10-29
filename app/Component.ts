@@ -1,13 +1,18 @@
-import Layout, {Dimension} from "./Layout";
-import Window from "../graphics/Window";
+import Layout from "./Layout";
+import {DrawContext} from "../graphics";
+import {Dimension} from "../gui";
+import StyleManager from "../gui/StyleManager";
 
 export default abstract class Component {
-    constructor(parent: Component, layout: Layout, window: Window);
-    constructor(parent: Component, layout: Layout) {
+    constructor(parent: Layout, args: Map<string, string | number | boolean | Function>) {
 
     }
 
-    abstract render(window: Window);
+    setHandler(handler: string, callback: () => any) {
+
+    };
+
+    abstract render(window: DrawContext, bounds: Dimension);
 
     abstract destroy();
 

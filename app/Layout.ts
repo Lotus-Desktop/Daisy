@@ -1,24 +1,21 @@
 import Component from "./Component";
-
-/**
- * if both south and height are provided, the renderer will use those coordinates as rendering points and the width and height to scale the object
- */
-export type Dimension = {
-    north: number,
-    east: number,
-    south?: number,
-    west?: number,
-    width: number,
-    height: number
-};
+import {DrawContext} from "../graphics";
+import {Dimension} from "../gui";
 
 export default abstract class Layout {
-    private children: Set<Component>;
+    protected children: Array<Component | Layout>;
 
-    abstract addChild(child: Component);
-    abstract removeChild(child: Component);
+    constructor(parent: Layout, args: Map<string, string | number | boolean | Function>) {
+    }
 
-    abstract getDimension(): Dimension;
+    setHandler(handler: string, callback: () => any) {
 
-    abstract renderChildren();
+    };
+
+    abstract addChild(child: Component | Layout);
+    abstract removeChild(child: Component | Layout);
+
+    abstract getDimensions(): Dimension;
+
+    abstract render(context: DrawContext, bounds: Dimension);
 }

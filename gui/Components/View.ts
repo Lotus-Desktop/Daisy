@@ -1,24 +1,9 @@
-import {Component, Dimension} from "../../app/index";
-import Window from "../../graphics/Window";
+import {Component} from "../../app/index";
 
-export default class View extends Component {
-    destroy() {
-    }
-
-    getDimensions(): Dimension {
-        return undefined;
-    }
-
-    onPointerDown(handler: (x: number, y: number) => boolean): void {
-    }
-
-    onPointerUp(handler: () => boolean): void {
-    }
-
-    render(window: Window) {
-    }
-
-    setDimensions(dimension: Dimension) {
-    }
-
+/**
+ * A `View` object is a generic wrapper element designed to act as a base class for various view functions such as widgets.
+ * It cannot be instantiated directly, as there is no way to control what is rendered
+ */
+export default abstract class View extends Component {
+    // Add functions specifically for generic widgets here
 }

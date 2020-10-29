@@ -1,19 +1,28 @@
-import Layout, {Dimension} from "../../app/Layout";
+import Layout from "../../app/Layout";
 import Component from "../../app/Component";
-import Window from "../../graphics/Window";
+import {DrawContext} from "../../graphics";
+import {Dimension} from "../index";
 
+/**
+ * A `StackLayout` aligns components along an axis such that (unless specified) there is no space between items.
+ */
 export default class StackLayout extends Layout {
-    addChild(child: Component) {
+    addChild(child: Component | Layout) {
     }
 
-    getDimension(): Dimension {
+    getDimensions(): Dimension {
         return undefined;
     }
 
-    removeChild(child: Component) {
+    removeChild(child: Component | Layout) {
     }
 
-    renderChildren() {
+    render(context: DrawContext, bounds: Dimension) {
     }
 
+}
+
+export enum Dir {
+    HORIZONTAL,
+    VERTICAL
 }

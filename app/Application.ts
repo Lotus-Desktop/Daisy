@@ -1,11 +1,8 @@
 import LayoutBuilder from "../dld/LayoutBuilder";
-import Layout from "./Layout";
 import Window, {DrawContext, WindowOptions} from "../graphics/Window"
 
 export interface ApplicationContext {
     layoutBuilder: LayoutBuilder,
-
-    setRootLayout(layout: Layout | Promise<Layout>): void;
 }
 
 export interface ApplicationPreferences {
@@ -51,23 +48,16 @@ export default abstract class Application {
         // Do private initialisation here
         await this.start({
             layoutBuilder: new LayoutBuilder({}),
-            /**
-             * Sets the layout such that it takes up the full window space.
-             * @param root The layout to span the window
-             */
-            setRootLayout(root: Layout | Promise<Layout>): void {
-                if (root instanceof Promise)
-                    root.then(() => Context.stdout.write("Done"));
-                else
-                    Context.stdout.write("Done");
-            }
         });
 
-        if (this.windows.length > 0)
+        if (this.windows.length > 0) {
+            console.log("Daisy is in windowed mode");
             this.windows[0].show(function (context: DrawContext): boolean {
+                context.rootView.render(context, context.window.getDimensions());
+
                 return true;
             });
-        else {
+        } else {
             console.log("Daisy is in command-line mode")
             // Make command-line application
         }

@@ -5,6 +5,7 @@
         "sourceMap": true,
         "declaration": true,
         "outDir": "./build",
+        "downlevelIteration": true,
         "rootDirs": ["gui", "app", "event",
             "dld", "graphics"],
         "lib": [
