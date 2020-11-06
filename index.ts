@@ -4,11 +4,11 @@ export * as event from './event/index';
 export * as graphics from './graphics/index';
 export * as dld from './dld/index';
 
-import Application from "./app";
+import app from "./app";
 
 export default {
-    Application,
-    setEntryPoint<T extends Application>(app: new() => T) {
+    Application: app,
+    setEntryPoint<T extends app>(app: new() => T) {
         new app();
     }
 }

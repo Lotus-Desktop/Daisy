@@ -19,8 +19,7 @@ export default abstract class Application {
     protected constructor(preferences: ApplicationPreferences) {
         this.preferences = preferences;
 
-        this.launchApplication().then(r => {
-        });
+        this.launchApplication().then(() => {});
     }
 
     abstract async start(context: ApplicationContext);
@@ -44,22 +43,39 @@ export default abstract class Application {
         return [window, this.windows.length - 1];
     }
 
+    /**
+     * Contains the main draw loop of the framework. If this function is overridden, the user has direct access to drawing APIs.
+     * Consequently, GUI widgets will not be rendered, instead overriding this function opens *paint mode*
+     * @param context The `DrawContext` type is set of functions relating to drawing to the current context (window).
+     */
+    onDraw(context: DrawContext): boolean {
+        if (context.rootView)
+            context.rootView.render(context, context.window.getDimensions());
+        else // Show Loading Screen
+            console.log("Loading App");
+
+        return true;
+    }
+
     private async launchApplication() {
         // Do private initialisation here
-        await this.start({
-            layoutBuilder: new LayoutBuilder({}),
-        });
-
-        if (this.windows.length > 0) {
-            console.log("Daisy is in windowed mode");
-            this.windows[0].show(function (context: DrawContext): boolean {
-                context.rootView.render(context, context.window.getDimensions());
-
-                return true;
+        try {
+            await this.start({
+                // layoutBuilder: null
+                layoutBuilder: new LayoutBuilder({}),
             });
-        } else {
-            console.log("Daisy is in command-line mode")
-            // Make command-line application
+
+            if (this.windows.length > 0) {
+                console.log("Daisy is in windowed mode");
+                this.windows[0].show(context => this.onDraw(context));
+            } else {
+                console.log("Daisy is in command-line mode")
+                // Make command-line application
+            }
+        } catch (err) {
+            console.error("An error occurred in Initialisation");
+            console.error(err);
+            throw err;
         }
     }
 }

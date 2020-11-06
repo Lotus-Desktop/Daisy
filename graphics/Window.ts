@@ -19,7 +19,11 @@ export interface WindowOptions {
 
 export interface DrawContext {
     drawPoint: typeof SDL.renderDrawPoint,
+    drawRect: typeof SDL.renderDrawRect,
+    drawText: typeof SDL.drawText,
+    fillRect: typeof SDL.renderFillRect
     setColour: typeof SDL.setRenderDrawColour,
+    setTextColour: typeof SDL.setTextColour,
 
     rootView: BlockLayout,
     window: Window,
@@ -55,8 +59,8 @@ export default class Window {
      * Sets the layout such that it takes up the full window space.
      * @param root The layout to span the window
      */
-    setRootLayout(root: Layout | Promise<Layout>): void {
-        if (root instanceof Promise)
+    setRootLayout(root: Layout<any> | Promise<Layout<any>>): void {
+        if (root instanceof Promise || "then" in root)
             root.then(layout => this.layout = layout);
         else
             this.layout = root;
@@ -68,8 +72,10 @@ export default class Window {
      */
     getDimensions(): Dimension {
         return {
-            width: this.options.width,
-            height: this.options.height,
+            x: 0,
+            y: 0,
+            w: this.options.width,
+            h: this.options.height,
         }
     }
 
@@ -87,27 +93,36 @@ export default class Window {
 
         let draw;
 
+        const openSans = sdl.loadFont("/home/jcake/.fonts/open-sans/OpenSans-Regular.ttf"); // TODO: Replace with FontLoader class
+        sdl.setFont(openSans, 20);
+
         Timing.setTimeout(draw = (function () {
             sdl.setRenderDrawColour(0xff, 0xff, 0xff, 0xff);
             sdl.renderClear();
-            sdl.renderPresent();
             sdl.pollEvent();
 
             onUpdate(this.buildContext());
+
+            sdl.renderPresent();
 
             if (sdl.getEvent().type !== sdl.Events.Quit)
                 Timing.setTimeout(draw, 0);
             else
                 sdl.quit();
-        }).bind(this), 0);
+        }).bind(this), 1000 / 60);
     }
 
     private buildContext(): DrawContext {
         return {
             drawPoint: sdl.renderDrawPoint,
+            drawText: sdl.drawText,
+            drawRect: sdl.renderDrawRect,
+            fillRect: sdl.renderFillRect,
             setColour: sdl.setRenderDrawColour,
-            rootView: this.layout,
+            setTextColour: sdl.setTextColour,
+
             window: this,
+            rootView: this.layout || null,
             styleManager: new StyleManager()
         };
     }

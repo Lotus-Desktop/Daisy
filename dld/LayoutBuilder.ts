@@ -1,6 +1,6 @@
 import {DataResource, File, PathResolver, PathType} from 'std/io';
 
-import Layout from "../app/Layout";
+import type Layout from "../app/Layout";
 import {AbstractLayout, Insert, Token, TokenType, tokenTypes} from "./AbstractLayout";
 
 export interface BuilderOptions {
@@ -8,9 +8,7 @@ export interface BuilderOptions {
 }
 
 export default class LayoutBuilder {
-    private static pathUtil = new PathResolver({root: Context.root, pathType: 1 as PathType})
-    return
-    layout;
+    private static pathUtil = new PathResolver({root: Context.root, pathType: 1 as PathType});
     private options: BuilderOptions;
 
     constructor(options: BuilderOptions) {
@@ -18,7 +16,6 @@ export default class LayoutBuilder {
     }
 
     private static parseLayout(input: string): AbstractLayout {
-        console.log(input);
         const layout = new AbstractLayout();
 
         const tokens: Token[] = [];
@@ -30,7 +27,7 @@ export default class LayoutBuilder {
         while (source.length > 0) {
             const accumulator = [];
 
-            let token: Token;
+            let token: Token = null;
 
             for (const char of source) {
                 accumulator.push(char);
@@ -64,6 +61,7 @@ export default class LayoutBuilder {
                     layout.push(token);
         } catch (err) {
             console.error(err);
+            throw err;
         }
 
         return layout;
@@ -75,14 +73,9 @@ export default class LayoutBuilder {
      * @param insert A set of variables to be used in templating of the Layout File
      * @returns Promise<Layout> The `Layout` to be used in the required context
      */
-    async buildFromLayout(file: string | DataResource, insert?: Partial<Insert> | Insert | (() => (Insert | Partial<Insert>))): Promise<Layout> {
+    async buildLayout(file: string | DataResource, insert?: Partial<Insert> | Insert | (() => (Insert | Partial<Insert>))): Promise<Layout<any>> {
         try {
-            // TODO: Convert to Layout
-            let layout: AbstractLayout;
-
-            if (typeof file === "string")
-                console.log(await new File(LayoutBuilder.pathUtil.clean(file)).read());
-
+            let layout;
             if (!(file instanceof DataResource))
                 layout = await LayoutBuilder.parseLayout(await new File(LayoutBuilder.pathUtil.clean(file)).read() || "");
             else
@@ -91,7 +84,7 @@ export default class LayoutBuilder {
             return layout.toLayout(typeof insert === "function" ? insert() : insert);
         } catch (err) {
             console.error(err);
-            return null;
+            throw err;
         }
     }
 }

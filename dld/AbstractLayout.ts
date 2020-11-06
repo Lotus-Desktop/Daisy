@@ -1,7 +1,13 @@
-import Layout from "../app/Layout";
-import Component from "../app/Component";
+import type Layout from "../app/Layout";
+import type Component from '../app/Component';
 import BlockLayout from "../gui/Layouts/BlockLayout";
-import StackLayout, {Dir} from "../gui/Layouts/StackLayout";
+import StackLayout from "../gui/Layouts/StackLayout";
+import FlexLayout from "../gui/Layouts/FlexLayout";
+import TextView from '../gui/Components/TextView';
+import Button from '../gui/Components/Button';
+import type {props, Widget} from '../gui';
+// noinspection ES6PreferShortImport
+import {Align, Dir} from "../gui/enums";
 
 export enum TokenType {
     Identifier,
@@ -48,10 +54,12 @@ export const tokenTypes: Record<TokenType, RegExp> = {
 };
 
 export interface Insert {
-    variables: {[key: string]: string | number | boolean },
-    functions: {[key: string]: () => any},
+    variables: { [key: string]: string | number | boolean },
+    functions: { [key: string]: Function },
     components: {
-        [identifier: string]: {new(parent: Layout, args: Map<string, string | number | boolean | Function>): Component | Layout}
+        [identifier: string]: {
+            new<Args extends props>(parent: Layout<any>, args: Args): Widget<Args>
+        }
     },
     enums: {
         [key: string]: {
@@ -69,21 +77,26 @@ interface BuilderLayout {
 
 export class AbstractLayout {
 
-    private tokens: Token[] = [];
-
     private static insert: Insert = {
         components: {
-            Root: BlockLayout,
-            BlockLayout: BlockLayout,
-            StackLayout: StackLayout
+            Root: BlockLayout as {new<Args extends props>(): Layout<Args>},
+            BlockLayout: BlockLayout as {new<Args extends props>(): Layout<Args>},
+            StackLayout: StackLayout as {new<Args extends props>(): Layout<Args>},
+            FlexLayout: FlexLayout as {new<Args extends props>(): Layout<Args>},
+            TextView: TextView as {new<Args extends props>(): Component<Args>},
+            Button: Button as {new<Args extends props>(): Component<Args>}
         },
         enums: {
-            direction: Dir
+            direction: Dir,
+            align: Align
         },
         functions: {},
-        variables: {}
+        variables: {
+            hello: "Hello World",
+            button_string: "Button"
+        }
     };
-
+    private tokens: Token[] = [];
     private layout: BuilderLayout = {
         parent: undefined,
         children: [],
@@ -121,41 +134,40 @@ export class AbstractLayout {
         return out;
     }
 
-    toLayout(_insert: Partial<Insert>): Layout {
+    toLayout(_insert: Partial<Insert>): Layout<any> {
         const insert = this.fill_default(_insert);
-        const buildArgs = function (insert: Partial<Insert>, attr: Map<string, Token>, callback: (args: Map<string, string | number | boolean | Function>) => Component | Layout): Component | Layout {
-            const args = new Map<string, string | number | boolean | Function>();
+        const buildArgs = function<Args extends props> (insert: Partial<Insert>, attr: Map<string, Token>, callback: (args: Partial<Args>) => Widget<Args>): Widget<Args> {
+            const args: Partial<Args> = {};
             for (const i of attr.entries())
-                args.set(i[0], (function(key: string, tok: Token) {
+                args[i[0] as keyof Args] = (function (key: string, tok: Token): Args[keyof Args] {
                     if (tok.type === TokenType.Identifier)
-                        return insert.variables[key][tok.source];
+                        return insert.enums[key][tok.source] as Args[keyof Args];
                     else if (tok.type === TokenType.Function)
-                        return insert.functions[tok.source];
+                        return insert.functions[tok.source.substring(1)] as Args[keyof Args];
                     else if (tok.type === TokenType.Variable)
-                        return insert.variables[tok.source];
+                        return insert.variables[tok.source.substring(1)] as Args[keyof Args];
                     else if (tok.type === TokenType.Number)
-                        return Number(tok.source);
+                        return Number(tok.source) as Args[keyof Args];
                     else if (tok.type === TokenType.Boolean)
-                        return tok.source === "True";
+                        return Boolean(tok.source === "True") as Args[keyof Args];
                     else
-                        return tok.source;
-                })(i[0], i[1]));
+                        return String(tok.source) as Args[keyof Args];
+                })(i[0], i[1]);
 
-            return callback(args);
+            return callback(args as Args);
         }
-        const iterator = (builderLayout: BuilderLayout, parent: Layout): Component | Layout => buildArgs(insert, builderLayout.attributes, args => {
+
+        const iterator = (builderLayout: BuilderLayout, parent: Layout<any>): Widget<any> => buildArgs(insert, builderLayout.attributes, args => {
             if (builderLayout.constructorName in insert.components) {
                 const component = new insert.components[builderLayout.constructorName](parent, args);
 
-                if (builderLayout.children.length > 0 || component instanceof Layout)
+                if (builderLayout.children.length > 0)
                     for (const child of builderLayout.children)
-                        (component as Layout).addChild(iterator(child, component as Layout));
+                        (component as Layout<any>).addChild(iterator(child, component as Layout<any>));
 
                 return component;
             } else throw new Error(`${builderLayout.constructorName} was not registered`);
         });
-
-        // console.log(builderLayout.constructorName);
 
         return iterator(this.layout, null) as BlockLayout
     }
@@ -164,22 +176,24 @@ export class AbstractLayout {
         if (this.tokens.length > 0) {
             // const layout = new BuilderLayout(this.layout);
             const layout: BuilderLayout = {
-                attributes: undefined,
+                attributes: new Map(),
                 children: [],
-                constructorName: "BlockLayout",
+                constructorName: "",
                 parent: this.layout
             }
 
-            let attrName: string;
+            let attrName: string = "";
 
             const expectedTypes: TokenType[] = [TokenType.Identifier];
 
             for (const token of this.tokens) {
+                // console.log(expectedTypes.map(i => TokenType[i]));
                 if (!expectedTypes.includes(token.type))
-                    throw new SyntaxError(`Unexpected Token ${token.source}`);
+                    throw new SyntaxError(`Unexpected Token ${token.source}; Expected ${expectedTypes.map(i => TokenType[i])}`);
                 else
                     switch (token.type) {
                         case TokenType.Identifier:
+                            // console.log(layout.constructorName);
                             if (!layout.constructorName) {
                                 layout.constructorName = token.source;
                                 expectedTypes.splice(0, expectedTypes.length, TokenType.LParen, TokenType.Identifier);
@@ -197,7 +211,7 @@ export class AbstractLayout {
                                 layout.attributes.set(attrName, token);
                                 expectedTypes.splice(0, expectedTypes.length, TokenType.Comma, TokenType.RParen, TokenType.Tag);
                                 break;
-                            } else throw new SyntaxError(`Unexpected Token ${token.source}`);
+                            } else throw new SyntaxError(`Unexpected Token ${token.source}; Attribute name was not specified`);
                         case TokenType.Comma:
                             attrName = "";
                             expectedTypes.splice(0, expectedTypes.length, TokenType.Identifier);

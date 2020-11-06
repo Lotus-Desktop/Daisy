@@ -1,10 +1,14 @@
+import {Dimension} from "./index";
+
 export class StyleSheet {
-    get margin() {
+    get margin(): Dimension {
         return {
-            north: 0,
-            east: 0,
-            south: 0,
-            west: 0,
+            x: 0,
+            x2: 0,
+            y: 0,
+            y2: 0,
+            w: 0,
+            h: 0
         }
     }
 }
